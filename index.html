@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amazon納品梱包情報変換ツール</title>
+    <title>Amazon納品ツール</title>
     <link rel="stylesheet" href="index.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -12,110 +12,165 @@
 </head>
 
 <body>
-    <div class="container">
 
-        <h1>Amazon納品梱包情報変換ツール</h1>
-        <p class="subtitle">ラクマート明細をAmazon納品テンプレートに自動転記します</p>
+    <!-- ===================== SIDEBAR ===================== -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span>Amazon<br>納品効率化ツール</span>
+        </div>
+        <div class="nav-item active" data-page="page-amazon" onclick="navigate(this)">
+            <i data-lucide="package-check" width="17" height="17"></i>
+            Amazon納品梱包情報変換
+        </div>
+        <div class="nav-item" data-page="page-shipping" onclick="navigate(this)">
+            <i data-lucide="ship" width="17" height="17"></i>
+            国際送料按分計算
+        </div>
+    </nav>
 
-        <!-- Upload Card -->
-        <div class="card">
-            <div class="upload-section">
-                <div class="drop-zone" id="drop-zone-1">
-                    <i data-lucide="file-spreadsheet" width="36" height="36"></i>
-                    <div class="label">Excel ①</div>
-                    <div class="text">Amazon 納品テンプレート</div>
-                    <input type="file" id="file-1" accept=".xlsx" style="display:none">
-                    <div class="filename" id="filename-1"></div>
+    <!-- ===================== MAIN ===================== -->
+    <main class="main">
+
+        <!-- ========== PAGE 1: Amazon納品梱包情報変換 ========== -->
+        <div class="page active" id="page-amazon">
+            <div class="page-header">
+                <h1>Amazon納品梱包情報変換</h1>
+                <p>ラクマート明細をAmazon納品テンプレートに自動転記します</p>
+            </div>
+
+            <div class="card">
+                <div class="upload-section">
+                    <div class="drop-zone" id="dz1-amazon">
+                        <i data-lucide="file-spreadsheet" width="34" height="34"></i>
+                        <div class="label">Excel ①</div>
+                        <div class="text">Amazon 納品テンプレート</div>
+                        <input type="file" id="file1-amazon" accept=".xlsx" style="display:none">
+                        <div class="filename" id="fname1-amazon"></div>
+                    </div>
+                    <div class="drop-zone" id="dz2-amazon">
+                        <i data-lucide="package" width="34" height="34"></i>
+                        <div class="label">Excel ②</div>
+                        <div class="text">ラクマート 梱包リスト</div>
+                        <input type="file" id="file2-amazon" accept=".xlsx" style="display:none">
+                        <div class="filename" id="fname2-amazon"></div>
+                    </div>
                 </div>
-                <div class="drop-zone" id="drop-zone-2">
-                    <i data-lucide="package" width="36" height="36"></i>
-                    <div class="label">Excel ②</div>
-                    <div class="text">ラクマート 梱包リスト</div>
-                    <input type="file" id="file-2" accept=".xlsx" style="display:none">
-                    <div class="filename" id="filename-2"></div>
+                <button class="convert-btn" id="convert-btn-amazon" disabled>
+                    <i data-lucide="refresh-cw" width="17" height="17"></i>
+                    変換・表示する
+                </button>
+                <div class="status-area" id="status-amazon">
+                    <div class="progress-bar">
+                        <div class="progress-inner" id="prog-amazon"></div>
+                    </div>
+                    <div class="log" id="log-amazon"></div>
                 </div>
             </div>
-            <button class="convert-btn" id="convert-btn" disabled>
-                <i data-lucide="refresh-cw" width="18" height="18"></i>
-                変換・表示する
-            </button>
-            <div class="status-area" id="status-area">
-                <div class="progress-bar">
-                    <div class="progress-inner" id="progress-inner"></div>
+
+            <div class="result-section">
+                <div class="card">
+                    <div class="section-title"><i data-lucide="check-circle-2" width="18" height="18"></i> ① 数量チェック（予定
+                        vs ラクマート実績）</div>
+                    <div id="val-summary"></div>
+                    <div class="table-wrapper">
+                        <table id="validation-table">
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="placeholder-cell">ファイルをアップロードして変換を実行してください</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="log" id="log-area"></div>
+                <div class="card">
+                    <div class="section-title"><i data-lucide="layout-grid" width="18" height="18"></i> ② 商品ごとの箱数量</div>
+                    <p class="copy-hint">※ FNSKUとSKUはコピーされません。Excel①の「輸送箱1」の列に合わせて貼り付けてください。</p>
+                    <button class="copy-btn" id="copy-btn-1" onclick="copyTableData('qty-table', 2, 'copy-btn-1')"><i
+                            data-lucide="clipboard" width="14" height="14"></i> 数値をコピーする</button>
+                    <div class="table-wrapper">
+                        <table id="qty-table">
+                            <tbody>
+                                <tr>
+                                    <td colspan="10" class="placeholder-cell">ファイルをアップロードして変換を実行してください</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="section-title"><i data-lucide="ruler" width="18" height="18"></i> ③ 輸送箱のサイズ・重量</div>
+                    <p class="copy-hint">※ 左の項目名はコピーされません。Excel①の重量・サイズ行に貼り付けてください。</p>
+                    <button class="copy-btn" id="copy-btn-2" onclick="copyTableData('size-table', 1, 'copy-btn-2')"><i
+                            data-lucide="clipboard" width="14" height="14"></i> 数値をコピーする</button>
+                    <div class="table-wrapper">
+                        <table id="size-table">
+                            <tbody>
+                                <tr>
+                                    <td colspan="10" class="placeholder-cell">ファイルをアップロードして変換を実行してください</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Result Section (always visible) -->
-        <div class="result-section" id="result-section">
-
-            <!-- Table 1 (top): Validation -->
-            <div class="card">
-                <div class="section-title">
-                    <i data-lucide="check-circle-2" width="20" height="20"></i>
-                    ① 数量チェック（予定 vs ラクマート実績）
-                </div>
-                <div id="val-summary" style="margin-bottom: 16px;"></div>
-                <div class="table-wrapper">
-                    <table id="validation-table">
-                        <tbody>
-                            <tr>
-                                <td colspan="6" class="placeholder-cell">ファイルをアップロードして「変換・表示する」を押してください</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- ========== PAGE 2: 国際送料按分計算 ========== -->
+        <div class="page" id="page-shipping">
+            <div class="page-header">
+                <h1>国際送料按分計算</h1>
+                <p>国際送料をExcel②の梱包データをもとに商品ごとに按分します</p>
             </div>
 
-            <!-- Table 2: Product Quantities per Box -->
             <div class="card">
-                <div class="section-title">
-                    <i data-lucide="layout-grid" width="20" height="20"></i>
-                    ② 商品ごとの箱数量
+                <div class="input-row">
+                    <label>国際送料合計</label>
+                    <input type="number" id="total-shipping-cost" placeholder="例: 150000" min="0" step="1">
+                    <span class="unit">円</span>
                 </div>
-                <p class="copy-hint">※ FNSKUとSKUはコピーされません。Excel①の「輸送箱1」の列に合わせてそのまま貼り付けてください。</p>
-                <button class="copy-btn" id="copy-btn-1" onclick="copyTableData('qty-table', 2, 'copy-btn-1')">
-                    <i data-lucide="clipboard" width="15" height="15"></i>
-                    数値をコピーする
+                <div style="max-width: 400px;">
+                    <div class="drop-zone" id="dz2-shipping">
+                        <i data-lucide="package" width="34" height="34"></i>
+                        <div class="label">Excel ②</div>
+                        <div class="text">ラクマート 梱包リスト</div>
+                        <input type="file" id="file2-shipping" accept=".xlsx" style="display:none">
+                        <div class="filename" id="fname2-shipping"></div>
+                    </div>
+                </div>
+                <button class="convert-btn" id="convert-btn-shipping" disabled style="margin-top: 16px;">
+                    <i data-lucide="calculator" width="17" height="17"></i>
+                    按分計算を実行する
                 </button>
-                <div class="table-wrapper">
-                    <table id="qty-table">
-                        <tbody>
-                            <tr>
-                                <td colspan="10" class="placeholder-cell">ファイルをアップロードして「変換・表示する」を押してください</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="status-area" id="status-shipping">
+                    <div class="progress-bar">
+                        <div class="progress-inner" id="prog-shipping"></div>
+                    </div>
+                    <div class="log" id="log-shipping"></div>
                 </div>
             </div>
 
-            <!-- Table 3: Box Sizes and Weights -->
-            <div class="card">
-                <div class="section-title">
-                    <i data-lucide="ruler" width="20" height="20"></i>
-                    ③ 輸送箱のサイズ・重量
-                </div>
-                <p class="copy-hint">※ 左の項目名はコピーされません。Excel①の重量・サイズ行にそのまま貼り付けてください。</p>
-                <button class="copy-btn" id="copy-btn-2" onclick="copyTableData('size-table', 1, 'copy-btn-2')">
-                    <i data-lucide="clipboard" width="15" height="15"></i>
-                    数値をコピーする
-                </button>
-                <div class="table-wrapper">
-                    <table id="size-table">
-                        <tbody>
-                            <tr>
-                                <td colspan="10" class="placeholder-cell">ファイルをアップロードして「変換・表示する」を押してください</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="result-section">
+                <div class="card">
+                    <div class="section-title"><i data-lucide="bar-chart-2" width="18" height="18"></i> 商品ごとの国際送料</div>
+                    <div id="ship-summary"></div>
+                    <div class="table-wrapper">
+                        <table id="shipping-table">
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="placeholder-cell">送料を入力してExcel②をアップロードし、計算を実行してください</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-
         </div>
-    </div>
 
-    <script src="index.js"></script>
+    </main>
+
+    <script src="app.js"></script>
+    <script src="page-amazon.js"></script>
+    <script src="page-shipping.js"></script>
 </body>
 
 </html>
