@@ -1,0 +1,15 @@
+# 不要ファイルを除外
+node_modules/
+package-lock.json
+package.json
+
+# 解析用スクリプト（開発時のみ）
+analyze_excel.py
+analyze_excel.js
+re_analyze.js
+re_analyze_v2.js
+re_analyze_v3.js
+debug_sheets.js
+
+# Excelファイル（機密）
+*.xlsx
