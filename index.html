@@ -153,6 +153,9 @@
                 <div class="card">
                     <div class="section-title"><i data-lucide="bar-chart-2" width="18" height="18"></i> 商品ごとの国際送料</div>
                     <div id="ship-summary"></div>
+                    <button class="copy-btn" id="copy-btn-ship"
+                        onclick="copyTableData('shipping-table', 0, 'copy-btn-ship')"><i data-lucide="clipboard"
+                            width="14" height="14"></i> 一括コピーする（スプシに貼り付け可）</button>
                     <div class="table-wrapper">
                         <table id="shipping-table">
                             <tbody>
@@ -162,6 +165,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="ship-formula" style="display:none;"></div>
                 </div>
             </div>
         </div>

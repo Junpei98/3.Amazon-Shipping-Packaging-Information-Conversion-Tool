@@ -495,3 +495,34 @@ tr.row-ok td {
 #ship-summary {
   margin-bottom: 14px;
 }
+
+/* Formula explanation box */
+.formula-box {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: rgba(255, 153, 0, 0.04);
+  border: 1px solid rgba(255, 153, 0, 0.18);
+  border-radius: 12px;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: #C0C0C0;
+}
+
+.formula-box h4 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+.formula-box .step {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-left: 2px solid rgba(255, 153, 0, 0.3);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 6px 6px 0;
+}
+
+.formula-box .step strong {
+  color: #FFFFFF;
+}

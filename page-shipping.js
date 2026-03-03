@@ -105,6 +105,38 @@
                 合計 ${items.length} 商品 / ${totalUnits.toLocaleString()} 個 ／ 送料総額 ¥${Math.round(totalCost).toLocaleString()}
             </span>`;
 
+        // Formula explanation
+        const formulaEl = document.getElementById('ship-formula');
+        formulaEl.style.display = 'block';
+        formulaEl.className = 'formula-box';
+        formulaEl.innerHTML = `
+            <h4>📐 計算方法・按分ロジックの説明</h4>
+            <div class="step">
+                <strong>① 各箱の体積を算出</strong><br>
+                箱寸法（長さ × 幅 × 高さ cm）からそれぞれの体積を計算します。<br>
+                例：60cm × 40cm × 50cm = 120,000 cm³
+            </div>
+            <div class="step">
+                <strong>② 箱ごとの送料を按分</strong><br>
+                その箱の体積 ÷ 全箱の合計体積 × 国際送料合計 = 箱の負担送料<br>
+                体積の大きい箱ほど、より多くの送料を負担します。
+            </div>
+            <div class="step">
+                <strong>③ 商品ごとの送料を算出</strong><br>
+                箱の負担送料 ÷ 箱内の商品総個数 = 1個あたり送料<br>
+                同じ箱に入っている商品は、個数に応じて均等に按分されます。
+            </div>
+            <div class="step">
+                <strong>④ 複数箱に入っている商品</strong><br>
+                2つ以上の箱に入っている商品は、各箱での送料を合算して「送料合計」を算出し、<br>
+                送料合計 ÷ 合計個数 = 1個あたり送料 として表示します。
+            </div>
+            <div class="step" style="border-left-color:rgba(255,153,0,0.6);">
+                <strong>⚠ 前提条件</strong><br>
+                本計算は「体積比例」に基づく按分です。重さベースの場合はラクマートの実際の重量請求方式と異なる場合があります。
+            </div>
+        `;
+
         updateProgress('prog-shipping', 100);
         lucide.createIcons();
         addLog('log-shipping', '<span style="color:#AAFFAA;">✅ 按分計算が完了しました！</span>');
