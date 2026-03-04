@@ -118,8 +118,19 @@
             addCell(`<strong>¥${Math.round(perUnit).toLocaleString()}</strong>`, 'value');
         });
 
-        // Summary
+        // Total row
         const totalUnits = items.reduce((s, p) => s + p.totalQty, 0);
+        const totalCostSum = items.reduce((s, p) => s + p.totalCost, 0);
+        const totalTr = tbody.insertRow();
+        totalTr.style.cssText = 'border-top:2px solid var(--primary);background:rgba(255,153,0,0.06);';
+        const addTotalCell = (txt, cls) => { const td = totalTr.insertCell(); td.innerHTML = txt; if (cls) td.className = cls; };
+        addTotalCell('', '');
+        addTotalCell('<strong style="color:var(--primary);">合計</strong>', 'left');
+        addTotalCell(`<strong>${totalUnits.toLocaleString()}</strong>`, 'value');
+        addTotalCell(`<strong>¥${Math.round(totalCostSum).toLocaleString()}</strong>`, 'value');
+        addTotalCell('', '');
+
+        // Summary
         document.getElementById('ship-summary').innerHTML =
             `<span class="badge badge-ok" style="font-size:.85rem;padding:6px 16px;">
                 合計 ${items.length} 商品 / ${totalUnits.toLocaleString()} 個 ／ 送料総額 ¥${Math.round(totalCost).toLocaleString()}
