@@ -39,32 +39,52 @@
         // 按分方式：
         // 各箱の体積（L×W×H cm³）を計算 → 全体積に対する割合で各箱の送料を按分
         // 箱内の各商品は、個数割合で箱の送料をさらに按分
+        // ※ ラベル番号(FNSKU)や商品コードが無い商品(パッケージ等)は除外して計算
 
+        // 有効な商品がある箱のみ体積計算に含める
         let totalVolume = 0;
-        boxNums.forEach(n => { totalVolume += boxMap[n].volume; });
+        let skippedBoxes = [];
+        let validBoxNums = [];
+
+        boxNums.forEach(n => {
+            const validItems = boxMap[n].items.filter(it => it.fnsku && it.fnsku !== 'null' && it.fnsku.trim() !== '');
+            if (validItems.length > 0) {
+                totalVolume += boxMap[n].volume;
+                validBoxNums.push(n);
+            } else {
+                skippedBoxes.push(n);
+            }
+        });
+
+        if (skippedBoxes.length > 0) {
+            addLog('log-shipping', `⚠ 箱${skippedBoxes.join(', ')} にはラベル番号/商品コードのある商品がないため、按分対象から除外しました。`);
+        }
+        addLog('log-shipping', `按分対象: ${validBoxNums.length} 箱 / 全 ${boxNums.length} 箱`);
 
         if (totalVolume === 0) {
-            throw new Error('サイズデータが取得できませんでした。Excel②に箱寸法が含まれているか確認してください。');
+            throw new Error('有効な商品を含む箱のサイズデータが取得できませんでした。Excel②を確認してください。');
         }
 
-        addLog('log-shipping', `総体積: ${totalVolume.toLocaleString()} cm³`);
+        addLog('log-shipping', `按分対象の総体積: ${totalVolume.toLocaleString()} cm³`);
         updateProgress('prog-shipping', 50);
 
         // Per-product cost accumulator: { fnsku: { asin, qty, totalCost } }
         const productMap = {};
 
-        boxNums.forEach(n => {
+        validBoxNums.forEach(n => {
             const box = boxMap[n];
             const boxVolume = box.volume;
             const boxCost = (boxVolume / totalVolume) * totalCost; // 箱の按分送料
 
-            const totalQtyInBox = box.items.reduce((s, it) => s + it.qty, 0);
+            // 有効な商品のみ（FNSKU有り）で個数を計算
+            const validItems = box.items.filter(it => it.fnsku && it.fnsku !== 'null' && it.fnsku.trim() !== '');
+            const totalQtyInBox = validItems.reduce((s, it) => s + it.qty, 0);
             if (totalQtyInBox === 0) return;
 
-            // 箱のコストを個数で等分（商品ごとの体積比は考慮せず個数比で按分）
+            // 箱のコストを有効商品の個数で等分
             const costPerUnit = boxCost / totalQtyInBox;
 
-            box.items.forEach(it => {
+            validItems.forEach(it => {
                 if (!productMap[it.fnsku]) {
                     productMap[it.fnsku] = { fnsku: it.fnsku, asin: it.asin, totalQty: 0, totalCost: 0 };
                 }
@@ -111,29 +131,30 @@
         formulaEl.className = 'formula-box';
         formulaEl.innerHTML = `
             <h4>📐 計算方法・按分ロジックの説明</h4>
+            <div class="step" style="border-left-color:rgba(255,153,0,0.6);">
+                <strong>⓪ 前提：パッケージ等の除外</strong><br>
+                ラベル番号（FNSKU）や商品コードが無い商品（パッケージ・緩衝材等）は按分対象から除外します。<br>
+                その箱に有効な商品が1つもない場合、箱自体を体積計算から除外し、送料は他の箱の商品で按分します。
+            </div>
             <div class="step">
-                <strong>① 各箱の体積を算出</strong><br>
-                箱寸法（長さ × 幅 × 高さ cm）からそれぞれの体積を計算します。<br>
+                <strong>① 対象箱の体積を算出</strong><br>
+                有効な商品を含む箱のみ、箱寸法（長さ × 幅 × 高さ cm）から体積を計算します。<br>
                 例：60cm × 40cm × 50cm = 120,000 cm³
             </div>
             <div class="step">
                 <strong>② 箱ごとの送料を按分</strong><br>
-                その箱の体積 ÷ 全箱の合計体積 × 国際送料合計 = 箱の負担送料<br>
+                その箱の体積 ÷ 対象箱の合計体積 × 国際送料合計 = 箱の負担送料<br>
                 体積の大きい箱ほど、より多くの送料を負担します。
             </div>
             <div class="step">
                 <strong>③ 商品ごとの送料を算出</strong><br>
-                箱の負担送料 ÷ 箱内の商品総個数 = 1個あたり送料<br>
-                同じ箱に入っている商品は、個数に応じて均等に按分されます。
+                箱の負担送料 ÷ 箱内の有効商品の総個数 = 1個あたり送料<br>
+                同じ箱に入っている有効商品は、個数に応じて均等に按分されます。
             </div>
             <div class="step">
                 <strong>④ 複数箱に入っている商品</strong><br>
                 2つ以上の箱に入っている商品は、各箱での送料を合算して「送料合計」を算出し、<br>
                 送料合計 ÷ 合計個数 = 1個あたり送料 として表示します。
-            </div>
-            <div class="step" style="border-left-color:rgba(255,153,0,0.6);">
-                <strong>⚠ 前提条件</strong><br>
-                本計算は「体積比例」に基づく按分です。重さベースの場合はラクマートの実際の重量請求方式と異なる場合があります。
             </div>
         `;
 
